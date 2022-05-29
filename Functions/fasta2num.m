@@ -3,7 +3,7 @@ function [align]=fasta2num(file)
 [xseqs]=fastaread(file);
 xaln=char(xseqs.Sequence);
 letter2number_map = create_letter2number_map();
-
+align=zeros(size(xaln));
 for index=1:size(xaln,1)                           %loop over all sequences in the alignment 
       
     

@@ -22,11 +22,17 @@ end
 if ~isfield(options,'skip')
     options.skip=10;        % logging frequency
 end
+if ~isfield(options,'record')
+    options.record=0;        % logging type, 0 means avg only, 1 means record the whole model 
+end
+if ~isfield(options,'t0')
+    options.t0=1;        % usual step, default at 1.
+end
 % Initialize
 h = zeros(length(x0),1);
 x = x0;
 xmin=x;
-
+tic
 % Evaluate Initial Point and lbfgs params
 [g] = fun(x);
 h = -g;
@@ -39,7 +45,13 @@ mingtd=gtd;
 mini=1;
 exitflag=0;
 wt=[];
-wt(end+1,:)=x;
+if options.record==1
+    wt(end+1,:)=x;
+elseif options.record==0
+    [jx,hx]=Jw(x,options.q);
+    wt(end+1,1)=mean(mean(Frob(jx)));
+    wt(end+1,2)=mean(mean(mean(hx.^2)));
+end
 ind=zeros(1,options.m);ind(1)=1;
 skipping=0;
 % Output Log
@@ -50,7 +62,7 @@ for i = 1:options.maxIter
 
 
     if i>1
-        t=1;
+        t=options.t0;
     else
         t = min(1,1/sqrt(sum(g.^2)));
     end
@@ -68,9 +80,10 @@ for i = 1:options.maxIter
     
     output.step(i)=t;
     output.Xchange(i)=max(abs(t*h_old));
-    output.grad(i)=max(abs(g_old));
+    output.grad(i)=sum((g_old).^2);
     output.gtd(i)=gtd_old;
     output.gg(i)=dot(g,g_old)/sqrt(dot(g,g))/sqrt(dot(g_old,g_old));
+    output.timer(i)=toc;
 %%  Break Conditions
 
     if max(abs(t*h)) <= options.TolX
@@ -102,7 +115,13 @@ for i = 1:options.maxIter
         break;    
     end
     if mod(i,options.skip)==0
-        wt(end+1,:)=x;
+        if options.record==1
+            wt(end+1,:)=x;
+        elseif options.record==0
+            [jx,hx]=Jw(x,options.q);
+            wt(end+1,1)=mean(mean(Frob(jx)));
+            wt(end,2)=mean(mean(mean(hx.^2)));
+        end
     end
     
     % log output
