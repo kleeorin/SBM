@@ -1,17 +1,17 @@
 addpath('Functions')
 addpath('Functions/sMinimize')
 %%
-data='CM_30'
+data='CM'
 sz=1000;                % if you want to cross validate, pick less than the MSA size
 %% Inference parameters
 options.maxIter=400;
 
 options.maxCycle=options.maxIter;     % for N=(MSA size) use 300, if using N=(MSA size/10) and lower use 800+
 options.TolX=10^-15;     % how accurate do you need the parameters to be?
-options.N=50;          % size of generated model MSA per BM iteration  
+options.N=100;          % size of generated model MSA per BM iteration  
 options.delta_t=50000; % burn time for each sequence
 options.theta=0.3;      % reweighting for similarity, use 0.2-0.3
-options.m=1;           % lbfgs steps to keep. the more the better, at the expense a bit of memory and time.
+options.m=20;           % lbfgs steps to keep. the more the better, at the expense a bit of memory and time.
 options.skip=ceil(options.maxIter/50);        % for logging purposes, write down the result every SKIP number of iteration into "output.wt"
                           % wt is an important log to check for convergence as a function of iter number
 options.record=0;        % record the full model at every iteration (1) as oppose to just the recording only mean value per iteration (0)
@@ -19,8 +19,8 @@ options.AvgMethod='discard';% 'none' or 'discard'
 
 
 
-lambdaJ=0.0;             % coupling regularization
-lambdah=0.0;             % field regularization
+lambdaJ=0.01;             % coupling regularization
+lambdah=0.01;             % field regularization
 s_averaged=1;             % avg over stochstic runs. The lower the N, the more averaging you need.
 
 %% Seed for CV set assignment
