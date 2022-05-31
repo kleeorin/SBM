@@ -14,7 +14,7 @@ if ~isfield(options,'gtdTol')
     options.gtdTol=50;     % tolerance min stepsize
 end
 if ~isfield(options,'maxCycle')
-    options.maxCycle=100;   % stopping criteria of iter without improvement
+    options.maxCycle=300;   % stopping criteria of iter without improvement
 end
 if ~isfield(options,'maxIter')
     options.maxIter=300;    % stopping criteria max interations
@@ -61,27 +61,41 @@ fprintf('%10s   %13s   %12s   %12s %12s\n','Iteration','Step Length','X change',
 for i = 1:options.maxIter
 
 
-    if i>1
-        t=options.t0;
-    else
+    if i==1
         t = min(1,1/sqrt(sum(g.^2)));
+    else
+        t=options.t0;
+        %[h,s,y,ys,hess_diag,ind,skipping]=advanceSearch(x_old,x,t,g_old,g,s,y,ys,hess_diag,i,options,ind,skipping);
+        
+        [h,s,y,ys,hess_diag,ind,skipping]=UpdateHessian(g,g-g_old,x-x_old,s,y,ys,hess_diag,options,ind,skipping);
+
+        gtd=-g'*h; 
+
+        if mingtd>gtd
+            mingtd=gtd;
+            mini=i;
+            %xmin=x;
+        end
+
     end
+    
+    fprintf('%10d     %3.6e    %3.6e    %3.6e     %3.6e\n',i,t,max(abs(t*h)),max(abs(g)),gtd);
+
     g_old=g;
     h_old=h;
     gtd_old=gtd;
-    [x,t,h,g,gtd,s,y,ys,hess_diag,ind,skipping]=advanceSearch(x,t,h,g,fun,gtd,s,y,ys,hess_diag,i,options,ind,skipping);
-    if mingtd>gtd
-        mingtd=gtd;
-        mini=i;
-        %xmin=x;
-    end
-    fprintf('%10d     %3.6e    %3.6e    %3.6e     %3.6e\n',i,t,max(abs(t*h_old)),max(abs(g_old)),gtd_old);
+    x_old=x;    
+        
+        % advance to new point
+    x = x + t*h;
+        % calculate new point characteristics
+    [g]=fun(x);
 
     
     output.step(i)=t;
-    output.Xchange(i)=max(abs(t*h_old));
-    output.grad(i)=sum((g_old).^2);
-    output.gtd(i)=gtd_old;
+    output.Xchange(i)=max(abs(t*h));
+    output.grad(i)=sum((g).^2);
+    output.gtd(i)=gtd;
     output.gg(i)=dot(g,g_old)/sqrt(dot(g,g))/sqrt(dot(g_old,g_old));
     output.timer(i)=toc;
 %%  Break Conditions
